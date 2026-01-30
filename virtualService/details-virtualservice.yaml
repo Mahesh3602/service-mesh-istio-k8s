@@ -1,0 +1,11 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: details
+spec:
+  hosts:
+  - details  # when clients make a request to http://details
+  http:
+  - route:
+    - destination:
+        host: details # send them to the detail Kubernetes Service
