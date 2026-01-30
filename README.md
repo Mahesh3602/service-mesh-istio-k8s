@@ -31,13 +31,10 @@ helm install istio-ingress istio/gateway -n istio-ingress \
    ## check
 helm ls -A
 
-# 5. Deploy sample app to mesh
+# 5. Deploy sample app to mesh after enbling isto-injection
 kubectl label namespace default istio-injection=enabled
 
-kubectl create ns bookinginfo
-kubectl label namespace bookinginfo istio-injection=enabled
-
-kubectl apply -f sampleApp/bookinfo.yaml -n bookinginfo
+kubectl apply -f sampleApp/bookinfo.yaml
 
 -- each pod should have 2 containers
 -- load alb url
@@ -45,17 +42,17 @@ kubectl apply -f sampleApp/bookinfo.yaml -n bookinginfo
 ++++++++++++++++++++
 
 # 6 install virtual service
- kubectl apply -f virtualService/details-virtualservice.yaml -n bookinginfo
+ kubectl apply -f virtualService/details-virtualservice.yaml 
 
  ### just to try routing of traffic
- kubectl apply -f virtualService/details-virtualservice-retry.yaml -n bookinginfo
+ kubectl apply -f virtualService/details-virtualservice-retry.yaml 
 
 +++++++++++++++++++++
 
 # 7. Deploying one of the service(reviews) and managing traffic through Istio
 
-kubectl apply -f deploy-v2-review/reviews-v2.yaml --namespace=bookinginfo
-kubectl get endpoints -l app=reviews -n bookinginfo
+kubectl apply -f deploy-v2-review/reviews-v2.yaml 
+kubectl get endpoints -l app=reviews 
 
 # 9. Lets install gateway with vs
 kubectl apply -f deploy-v2-review/03-bookinfo-gateway.yaml 
