@@ -57,12 +57,14 @@ kubectl apply -f sampleApp/bookinfo.yaml -n bookinginfo
 kubectl apply -f deploy-v2-review/reviews-v2.yaml --namespace=bookinginfo
 kubectl get endpoints -l app=reviews -n bookinginfo
 
+# 9. Lets install gateway with vs
+kubectl apply -f deploy-v2-review/03-bookinfo-gateway.yaml 
+
+
 # 8. Installing Virtualservice with destination rules and see the switch of traffic
-kubectl apply -f deploy-v2-review/50-50-review.yaml
+kubectl apply -f deploy-v2-review/destinationRule-reviews.yaml
 
 +++++++++++++++++++++++
 
-# 9. Lets install gateway with vs
-kubectl apply -f deploy-v2-review/03-bookinfo-gateway.yaml 
 
 
