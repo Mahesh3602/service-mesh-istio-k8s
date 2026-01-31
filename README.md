@@ -63,5 +63,45 @@ kubectl apply -f deploy-v2-review/destinationRule-reviews.yaml
 
 +++++++++++++++++++++++
 
+# 9. security relatd
+
+## Run a shell in the Product Page Pod container to access details page:
+
+```
+kubectl exec -it deploy/productpage-v1 -- python
+```
+
+```
+import urllib.request
+urllib.request.urlopen("http://details:9080/details/1").read()
+exit()
+```
+
+ ## install legacy application
+ kubectl apply -f security-layer/sleep-in-legacy-ns.yaml
+
+ ## Run a shell in the legacy Pod container and acces details svc
+
+```
+kubectl -n legacy get po
+
+kubectl -n legacy exec -it deploy/sleep -- sh
+```
+
+Use the details API:
+
+```
+nslookup details.default.svc.cluster.local
+
+curl http://details.default.svc.cluster.local:9080/details/1
+
+curl http://details.default.svc.cluster.local:9080/details/100
+```
+
+# 10. enforce TLS
+  ### Enforce mTLS for all services in the default namespace:
+
+kubectl apply -f security-layer/mutual-tls.yaml
+   ### run all the commands from stp 9 again.
 
 
