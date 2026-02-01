@@ -1,0 +1,21 @@
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: productpage-authz
+  namespace: bookinfo
+spec:
+  selector:
+    matchLabels:
+      app: productpage
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        principals: ["cluster.local/ns/istio-ingress/sa/istio-ingress"] 
+        requestPrincipals: ["testing@secure.istio.io/*"] 
+    to:
+    - operation:
+        methods: ["GET"]
+    when:
+    - key: request.auth.claims[foo]
+      values: ["bar"]

@@ -180,7 +180,71 @@ kubectl exec -it deploy/sleep -- curl http://ratings:9080/ratings/1
 kubectl apply -f security-layer/default-namespace-authorization-policy.yaml
 
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# Security for application user (It required JWT authentication)
+# 15.
 
+   ### Lets apply JWT authentication policy to productpage
+  kubectl apply -f security-layer/user/productpage-authn-jwt.yaml
+  
+   ### test
+   browse productpage --> deny
+   
+   ``` 
+  curl -v http://localhost/productpage
+  ```
+  gives 403
+
+  >>> 
+  
+Try with any old JWT (from https://jwt.io):
+
+```
+curl -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c' -v http://localhost/productpage
+```
+
+> 401, JWT issuer not configured
+
+Use a valid JWT (from the [Istio sample JWT tools](https://github.com/istio/istio/blob/master/security/tools/jwt/samples/README.md)):
+
+```
+curl -H 'Authorization: Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IkRIRmJwb0lVcXJZOHQyenBBMnFYZkNtcjVWTzVaRXI0UnpIVV8tZW52dlEiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjQ2ODU5ODk3MDAsImZvbyI6ImJhciIsImlhdCI6MTUzMjM4OTcwMCwiaXNzIjoidGVzdGluZ0BzZWN1cmUuaXN0aW8uaW8iLCJzdWIiOiJ0ZXN0aW5nQHNlY3VyZS5pc3Rpby5pbyJ9.CfNnxWP2tcnR9q0vxyxweaF3ovQYHYZl82hAUsn21bwQd9zP7c-LS9qd_vpdLG4Tn1A15NxfCjp5f7QNBUo-KC9PJqYpgGbaXhaGx7bEdFWjcwv3nZzvc7M__ZpaCERdwU7igUmJqYGBYQ51vr2njU9ZimyKkfDe3axcyiBZde7G6dabliUosJvvKOPcKIWPccCgefSj_GNfwIip3-SsFdlR7BtbVUcqR-yv-XOxJ3Uc1MI0tz3uMiiZcyPV7sNCU4KRnemRIMHVOfuvHsU60_GhGbiSFzgPTAa9WTltbnarTbxudb_YEOx12JiwYToeX0DCPb43W1tzIBxgm8NxUg' -v http://localhost/productpage
+```
+
+> `200`
+
+
+## Decode the JWT
+
+The JWT is a base64 encoded string. Read the claims - browse to 
+ https://jwt.io and paste contents of [demo.jwt](demo.jwt)
+
+- Issuer: `testing@secure.istio.io`
+- Subject: `testing@secure.istio.io`
+- Custom: `foo=bar`
+
+# 16. Allow access by claims
+## Apply an authorization policy which allows access by issuer:
+kubectl apply -f security-layer/user/productpage-authz-allow-issuer.yaml
+  
+  ### test
+  repeat curl
+
+## Apply an authorization policy which allows access by issuer & subject
+kubectl apply -f security-layer/user/productpage-authz-allow-subject.yaml
+  ## test
+  > repeat curl gives 403
+
+## Apply authorization policy with issuer and claim
+kubectl apply -f security-layer/user/productpage-authz-allow-claim.yaml
+  ## test
+  > repeat curl request -> `200`
+
+# 17. integration with third party
+## Integration with third-party auth
+
+The same RequestAuthentication resource, with the identity provider's details plugged in, e.g. for Azure AD:
+
+- [productpage-auth-azure.yaml](productpage-auth-azure.yaml)
 
 
 

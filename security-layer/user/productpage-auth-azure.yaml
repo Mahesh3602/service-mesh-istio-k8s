@@ -1,0 +1,35 @@
+apiVersion: security.istio.io/v1
+kind: RequestAuthentication
+metadata:
+  name: productpage-authn
+  namespace: bookinfo
+spec:
+  selector:
+    matchLabels:
+      app: productpage
+  jwtRules:
+  - issuer: https://sts.windows.net/[tenant-id]/
+    jwksUri: https://login.microsoftonline.com/common/discovery/v2.0/keys
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: productpage-authz
+  namespace: bookinfo
+spec:
+  selector:
+    matchLabels:
+      app: productpage
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        requestPrincipals: ['https://login.microsoftonline.com/[tenant-id]/*'] 
+    to:
+    - operation:
+        methods: ["GET"]    
+    when:
+    - key: request.auth.claims[roles]
+      values:
+        - app.admin
+        - app.reader
