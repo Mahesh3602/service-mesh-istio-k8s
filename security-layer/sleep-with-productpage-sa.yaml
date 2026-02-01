@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sleep2
+  namespace: bookinfo
+spec:
+  selector:
+    matchLabels:
+      app: sleep2
+  template:
+    metadata:
+      labels:
+        app: sleep2
+    spec:
+      serviceAccountName: bookinfo-productpage
+      containers:
+      - name: sleep2
+        image: curlimages/curl
+        command: ["/bin/sleep", "1d"]

@@ -104,4 +104,89 @@ curl http://details.default.svc.cluster.local:9080/details/100
 kubectl apply -f security-layer/mutual-tls.yaml
    ### run all the commands from stp 9 again.
 
+# 11. Accessing external application with SA
+  #### create SA account for access to soecific ns
+ kubectl apply -f security-layer/default-namespace-authorization-policies.yaml
+
+ #### create sleep pod to use this SA account
+ Kubectl apply -f security-layer/sleep-with-productpage-sa.yaml
+ 
+ #### to check certs- not stored on disk, distributed securely using sds(secret discovery service)
+ kubectl logs -l app=productpage -c istio-proxy
+
+++++++++++++++++++++++++++++++++++++
+
+# 12. as part of security principal only product svc should access review.. all other svc should  by default deny. so , apply deny all by default on reviews.
+ ## check & deny
+  ### to check
+  ```
+kubectl describe peerauthentication
+
+kubectl get authorizationpolicy
+```
+  ### to apply
+ kubectl apply -f security-layer/reviews-deny-all.yaml
+
+ ## Allow access from product page. It uses service account
+  ### to check
+  ```
+kubectl get serviceaccount
+
+kubectl get po -l app=productpage -o json | jq '.items[0].spec.serviceAccountName'
+```
+  ### apply authorisation policy
+kubectl apply -f security-layer/reviews-allow-productpage.yaml
+  
+  ### test
+
+kubectl exec -it deploy/sleep -- sh
+```
+
+Try accessing the reviews & ratings APIs:
+
+```
+curl http://reviews:9080/1
+
+curl http://ratings:9080/ratings/1
+``
+
+# 13. configure for all service (like step 12)
+kubectl apply -f security-layer/defaultNS-workload-authorization-policy.yaml
+
+ ### test
+ ```
+kubectl exec -it deploy/sleep -- sh
+
+curl http://reviews:9080/1
+
+curl http://ratings:9080/ratings/1
+
+curl http://details:9080/details/1
+
+curl http://productpage:9080
+```
+# 14. step 13 , can also be obtained with coarse-grained model, targeting whole NS.
+  ### delete existing implementation
+  ```
+kubectl delete authorizationpolicy --all
+
+kubectl apply -f demo2/bookinfo-namespace-authorization-policies.yaml
+```
+
+```
+kubectl exec -it deploy/sleep -- curl http://ratings:9080/ratings/1
+```
+ ### apply coarse grained model
+kubectl apply -f security-layer/default-namespace-authorization-policy.yaml
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+
+
+
+
+
+
+
 

@@ -1,0 +1,12 @@
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+ name: reviews-authz
+ namespace: default
+spec:
+ selector:
+   matchLabels:
+      app: reviews
+ action: DENY
+ rules: 
+ - {}
