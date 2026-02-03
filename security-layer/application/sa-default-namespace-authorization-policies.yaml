@@ -8,7 +8,7 @@ spec:
   rules:
   - from:
     - source:
-        principals: ["cluster.local/ns/default/sa/bookinfo-productpage"]
+        principals: ["*/ns/default/sa/bookinfo-productpage"]
     to:
     - operation:
         methods: ["GET"]
@@ -17,7 +17,7 @@ apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: productpage-authz
-  namespace: bookinfo
+  namespace: default
 spec:
   selector:
     matchLabels:

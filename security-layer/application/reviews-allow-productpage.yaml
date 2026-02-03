@@ -2,7 +2,7 @@ apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: reviews-authz
-  namespace: bookinfo
+  namespace: default
 spec:
   selector:
     matchLabels:
@@ -11,7 +11,7 @@ spec:
   rules:
   - from:
     - source:
-        principals: ["cluster.local/ns/bookinfo/sa/bookinfo-productpage"]
+        principals: ["cluster.local/ns/default/sa/bookinfo-productpage"]
     to:
     - operation:
         methods: ["GET"]

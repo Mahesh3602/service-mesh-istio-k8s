@@ -1,7 +1,8 @@
 
 # Prerequistes
 - kubernetes cluster
-- loadbalncer controller installed to host and check apps
+- loadbalncer controller installed to host and check apps 
+- Sample application to host
 
 # 1. get istio helm repos
 helm repo add istio https://istio-release.storage.googleapis.com/charts
@@ -35,9 +36,14 @@ helm ls -A
 kubectl label namespace default istio-injection=enabled
 
 kubectl apply -f sampleApp/bookinfo.yaml
+- OR kubectl apply -f sampleApp/bookinfo-azure.yaml
+
+# 6. create ingress gateway
+kubectl apply -f sampleApp/bookinfo-gateway.yaml
 
 -- each pod should have 2 containers
--- load alb url
+-- load url of istio-ingress
+    * kubectl get svc -n istio-ingress
 
 ++++++++++++++++++++
 
@@ -61,12 +67,19 @@ kubectl apply -f deploy-v2-review/03-bookinfo-gateway.yaml
 # 8. Installing Virtualservice with destination rules and see the switch of traffic
 kubectl apply -f deploy-v2-review/destinationRule-reviews.yaml
 
+# 9. route traffic 50% traffic to new review verion
+kubectl apply -f deploy-v2-review/virtualService-split-traffic-review.yaml
+
 +++++++++++++++++++++++
 
 # 9. security relatd
 
-## Run a shell in the Product Page Pod container to access details page:
+## The default PeerAuthentication setup for Istio is permissive mTLS mode. 
+- Encrypted and accessible within mesh. 
+- Accessible out of mesh
 
+ #### Run a shell in the Product Page Pod container to access details page:. 
+ - Pod is part of mesh and  managed through Istio, It will use mutual TLS, you get response back from below commands
 ```
 kubectl exec -it deploy/productpage-v1 -- python
 ```
@@ -78,9 +91,11 @@ exit()
 ```
 
  ## install legacy application
+ 
  kubectl apply -f security-layer/sleep-in-legacy-ns.yaml
 
  ## Run a shell in the legacy Pod container and acces details svc
+ - pod is not part of mesh. repsonse should be returned but mutual TLS is not implemented.
 
 ```
 kubectl -n legacy get po
@@ -98,17 +113,20 @@ curl http://details.default.svc.cluster.local:9080/details/1
 curl http://details.default.svc.cluster.local:9080/details/100
 ```
 
-# 10. enforce TLS
+# 10. enforce TLS - to lock step 9
   ### Enforce mTLS for all services in the default namespace:
-
+  
 kubectl apply -f security-layer/mutual-tls.yaml
-   ### run all the commands from stp 9 again.
+- mtls conection is chsnged to strict
+- Run all the commands from stp 9 again. not accessible from pod/legacy outside mesh
+- accessible from within the pod
 
 # 11. Accessing external application with SA
-  #### create SA account for access to soecific ns
+  #### create SA account for access to specific ns
  kubectl apply -f security-layer/default-namespace-authorization-policies.yaml
+ - above policy create access only to productpage service
 
- #### create sleep pod to use this SA account
+ #### create sleep2 pod to use this SA account
  Kubectl apply -f security-layer/sleep-with-productpage-sa.yaml
  
  #### to check certs- not stored on disk, distributed securely using sds(secret discovery service)
@@ -151,11 +169,11 @@ curl http://ratings:9080/ratings/1
 ``
 
 # 13. configure for all service (like step 12)
-kubectl apply -f security-layer/defaultNS-workload-authorization-policy.yaml
+kubectl apply -f security-layer/defaultNS-workload-authorization-policies.yaml
 
  ### test
  ```
-kubectl exec -it deploy/sleep -- sh
+kubectl -n legacy exec -it deploy/sleep -- sh
 
 curl http://reviews:9080/1
 

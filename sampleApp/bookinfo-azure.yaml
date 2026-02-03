@@ -1,30 +1,6 @@
 # Copyright Istio Authors
-#
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-#
-#       http://www.apache.org/licenses/LICENSE-2.0
-#
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
-
-##################################################################################################
-# This file defines the services, service accounts, and deployments for the Bookinfo sample.
-#
-# To apply all 4 Bookinfo services, their corresponding service accounts, and deployments:
-#
-#   kubectl apply -f samples/bookinfo/platform/kube/bookinfo.yaml
-#
-# Alternatively, you can deploy any resource separately:
-#
-#   kubectl apply -f samples/bookinfo/platform/kube/bookinfo.yaml -l service=reviews # reviews Service
-#   kubectl apply -f samples/bookinfo/platform/kube/bookinfo.yaml -l account=reviews # reviews ServiceAccount
-#   kubectl apply -f samples/bookinfo/platform/kube/bookinfo.yaml -l app=reviews,version=v3 # reviews-v3 Deployment
-##################################################################################################
+# Licensed under the Apache License, Version 2.0
+# Modified for Azure AKS Sandbox (LoadBalancer Type)
 
 ##################################################################################################
 # Details service
@@ -47,16 +23,11 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: bookinfo-details
-  labels:
-    account: details
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: details-v1
-  labels:
-    app: details
-    version: v1
 spec:
   replicas: 1
   selector:
@@ -73,7 +44,6 @@ spec:
       containers:
       - name: details
         image: docker.io/istio/examples-bookinfo-details-v1:1.20.3
-        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 9080
 ---
@@ -98,16 +68,11 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: bookinfo-ratings
-  labels:
-    account: ratings
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: ratings-v1
-  labels:
-    app: ratings
-    version: v1
 spec:
   replicas: 1
   selector:
@@ -124,7 +89,6 @@ spec:
       containers:
       - name: ratings
         image: docker.io/istio/examples-bookinfo-ratings-v1:1.20.3
-        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 9080
 ---
@@ -149,16 +113,11 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: bookinfo-reviews
-  labels:
-    account: reviews
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: reviews-v1
-  labels:
-    app: reviews
-    version: v1
 spec:
   replicas: 1
   selector:
@@ -175,25 +134,14 @@ spec:
       containers:
       - name: reviews
         image: docker.io/istio/examples-bookinfo-reviews-v1:1.20.3
-        imagePullPolicy: IfNotPresent
         env:
         - name: LOG_DIR
           value: "/tmp/logs"
         ports:
         - containerPort: 9080
-        volumeMounts:
-        - name: tmp
-          mountPath: /tmp
-        - name: wlp-output
-          mountPath: /opt/ibm/wlp/output
-      volumes:
-      - name: wlp-output
-        emptyDir: {}
-      - name: tmp
-        emptyDir: {}
 ---
 ##################################################################################################
-# Productpage services
+# Productpage service (EXPOSED VIA LOAD BALANCER)
 ##################################################################################################
 apiVersion: v1
 kind: Service
@@ -203,28 +151,23 @@ metadata:
     app: productpage
     service: productpage
 spec:
+  type: LoadBalancer  # <--- This is the key change for Azure
   ports:
-  - port: 9080
-    targetPort: 9080
+  - port: 80          # Access the app on port 80
+    targetPort: 9080  # App listens on 9080
     name: http
   selector:
     app: productpage
-  type: NodePort
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: bookinfo-productpage
-  labels:
-    account: productpage
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: productpage-v1
-  labels:
-    app: productpage
-    version: v1
 spec:
   replicas: 1
   selector:
@@ -241,49 +184,5 @@ spec:
       containers:
       - name: productpage
         image: docker.io/istio/examples-bookinfo-productpage-v1:1.20.3
-        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 9080
-        volumeMounts:
-        - name: tmp
-          mountPath: /tmp
-      volumes:
-      - name: tmp
-        emptyDir: {}
----
-###################################################################################################
-# set up ingress
-###################################################################################################
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: bookinfo-ingress
-  annotations:
-    # alb.ingress.kubernetes.io/scheme: internet-facing
-    # alb.ingress.kubernetes.io/target-type: instance
-    # alb.ingress.kubernetes.io/healthcheck-port: '15021'
-    # alb.ingress.kubernetes.io/healthcheck-path: /healthz/ready
-    # alb.ingress.kubernetes.io/healthcheck-protocol: HTTP
-    ## below configuration is for azure 
-    # kubernetes.io/ingress.class: azure/application-gateway
-    # appgw.ingress.kubernetes.io/backend-path-prefix: "/"
-spec:
-  # ingressClassName: alb
-  ingressClassName: azure-alb-external
-  rules:
-    - http:
-        paths:
-          - path: /productpage
-            pathType: Prefix
-            backend:
-              service:
-                name: productpage
-                port:
-                  number: 9080
-          - path: /static  # Bookinfo needs static files to look pretty
-            pathType: Prefix
-            backend:
-              service:
-                name: productpage
-                port:
-                  number: 9080

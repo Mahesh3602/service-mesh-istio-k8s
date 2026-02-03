@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: sleep2
-  namespace: bookinfo
+  namespace: default
 spec:
   selector:
     matchLabels:
